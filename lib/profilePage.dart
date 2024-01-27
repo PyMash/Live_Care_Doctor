@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:live_care/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../home_page.dart';
@@ -200,15 +201,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 // await googleSignIn.signOut(); // Sign out from Google
                 // await _auth.signOut(); // Sign out from Firebase
       
-                // FirebaseAuth.instance
-                //     .signOut()
-                //     .then((value) => Navigator.pushAndRemoveUntil(
-                //           context,
-                //           MaterialPageRoute(
-                //               builder: (context) => MyApp()), // Your new screen
-                //           (Route<dynamic> route) =>
-                //               false, // Remove all previous routes
-                //         ));
+                FirebaseAuth.instance
+                    .signOut()
+                    .then((value) => Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => MyApp()), // Your new screen
+                          (Route<dynamic> route) =>
+                              false, // Remove all previous routes
+                        ));
               } catch (error) {
                 print(error.toString());
               }

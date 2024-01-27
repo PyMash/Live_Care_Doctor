@@ -21,6 +21,8 @@ class _SignUpPageState extends State<SignUpPage> {
         _specializations.first; // Set to the first specialization by default
   }
 
+  bool loading = false;
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -110,6 +112,9 @@ class _SignUpPageState extends State<SignUpPage> {
         );
         return;
       }
+      setState(() {
+        loading = true;
+      });
 
       // Perform signup if all validations pass
       UserCredential userCredential =
@@ -148,6 +153,9 @@ class _SignUpPageState extends State<SignUpPage> {
       );
       // Handle signup errors here
     }
+    setState(() {
+      loading = false;
+    });
   }
 
   File? _imageFile;
@@ -155,14 +163,14 @@ class _SignUpPageState extends State<SignUpPage> {
   String dpUrl = '';
 
   Future<void> _uploadImage() async {
-    await _pickImage();
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null && _imageFile != null) {
+    await _pickImage(context);
+
+    if (_imageFile != null) {
       try {
         // Show circular progress indicator
         showDialog(
           context: context,
-          barrierDismissible: false, // To prevent tapping outside to dismiss
+          barrierDismissible: false,
           builder: (BuildContext context) {
             return Center(
               child: CircularProgressIndicator(
@@ -178,27 +186,17 @@ class _SignUpPageState extends State<SignUpPage> {
             .child(_nameController.text)
             .child('dp.jpg');
         final uploadTask = storageRef.putFile(_imageFile!);
-        final storageSnapshot = await uploadTask.whenComplete(() => null);
-        final downloadUrl = await storageSnapshot.ref.getDownloadURL();
+        await uploadTask.whenComplete(() => null);
 
-        // await FirebaseFirestore.instance
-        //     .collection('users')
-        //     .doc(user.uid)
-        //     .update({'profilepicture': downloadUrl});
+        final downloadUrl = await storageRef.getDownloadURL();
         dpUrl = downloadUrl;
+        _imageFile = null;
 
         // Hide circular progress indicator
         Navigator.pop(context);
 
-        // setState(() {
-        //   _fetchUserData();
-        // });
-
-        // Navigate to ProfilePage
-        // Navigator.pushReplacement(
-        //   context,
-        //   MaterialPageRoute(builder: (context) => MainPage()),
-        // );
+        // Reset _imageFile after successful upload
+        
       } catch (error) {
         print('Error uploading image: $error');
         // Hide circular progress indicator
@@ -210,14 +208,12 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
-  Future _pickImage() async {
+  Future _pickImage(BuildContext context) async {
     final picker = ImagePicker();
     final pickedImage = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedImage != null) {
-      setState(() {
-        _imageFile = File(pickedImage.path);
-      });
+      _imageFile = File(pickedImage.path);
     }
   }
 
@@ -225,180 +221,188 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.cyan,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 25),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'Live Care',
-              style: GoogleFonts.montserrat(
-                  letterSpacing: 1.0,
-                  fontSize: MediaQuery.of(context).size.width * 0.1,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold),
-            ),
-            SizedBox(
-              height: 15,
-            ),
-            Text(
-              'Register Now',
-              style: GoogleFonts.montserrat(
-                  letterSpacing: 1.0,
-                  fontSize: MediaQuery.of(context).size.width * 0.05,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold),
-            ),
-            SizedBox(
-              height: 15,
-            ),
-            TextField(
-              textAlign: TextAlign.center,
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Name',
-                alignLabelWithHint: true,
-                labelStyle: TextStyle(color: Colors.white),
-                enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white)),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Colors.black,
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 25),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'Live Care',
+                  style: GoogleFonts.montserrat(
+                      letterSpacing: 1.0,
+                      fontSize: MediaQuery.of(context).size.width * 0.1,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold),
+                ),
+                SizedBox(
+                  height: 15,
+                ),
+                Text(
+                  'Register Now',
+                  style: GoogleFonts.montserrat(
+                      letterSpacing: 1.0,
+                      fontSize: MediaQuery.of(context).size.width * 0.05,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold),
+                ),
+                SizedBox(
+                  height: 15,
+                ),
+                TextField(
+                  textAlign: TextAlign.center,
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Name',
+                    alignLabelWithHint: true,
+                    labelStyle: TextStyle(color: Colors.white),
+                    enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white)),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.black,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            TextField(
-              textAlign: TextAlign.center,
-              controller: _emailController,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                alignLabelWithHint: true,
-                labelStyle: TextStyle(color: Colors.white),
-                enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white)),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Colors.black,
+                TextField(
+                  textAlign: TextAlign.center,
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    alignLabelWithHint: true,
+                    labelStyle: TextStyle(color: Colors.white),
+                    enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white)),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.black,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 10),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    _uploadImage();
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _uploadImage();
+                      },
+                      style: ElevatedButton.styleFrom(
+                          shape: LinearBorder(),
+                          foregroundColor: Colors.black,
+                          backgroundColor: Colors.grey.shade200),
+                      child: Text(
+                        "Upload Your Picture",
+                        style: GoogleFonts.poppins(color: Colors.black),
+                      ),
+                    ),
+                  ),
+                ),
+                DropdownButtonFormField(
+                  value: _selectedSpecialization,
+                  alignment: Alignment.center,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedSpecialization = value!;
+                    });
                   },
-                  style: ElevatedButton.styleFrom(
-                      shape: LinearBorder(),
-                      foregroundColor: Colors.black,
-                      backgroundColor: Colors.grey.shade200),
-                  child: Text(
-                    "Upload Your Picture",
-                    style: GoogleFonts.poppins(color: Colors.black),
+                  items: _specializations.map((specialization) {
+                    return DropdownMenuItem(
+                      value: specialization,
+                      child: Text(
+                        specialization,
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }).toList(),
+                  decoration: InputDecoration(
+                    labelText: 'Specialization',
+                    labelStyle: TextStyle(color: Colors.white),
+                    enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white)),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.black,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            DropdownButtonFormField(
-              value: _selectedSpecialization,
-              alignment: Alignment.center,
-              onChanged: (value) {
-                setState(() {
-                  _selectedSpecialization = value!;
-                });
-              },
-              items: _specializations.map((specialization) {
-                return DropdownMenuItem(
-                  value: specialization,
-                  child: Text(
-                    specialization,
-                    textAlign: TextAlign.center,
-                  ),
-                );
-              }).toList(),
-              decoration: InputDecoration(
-                labelText: 'Specialization',
-                labelStyle: TextStyle(color: Colors.white),
-                enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white)),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Colors.black,
+                TextField(
+                  textAlign: TextAlign.center,
+                  controller: _aboutController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'About Yourself (at least 200 words)',
+                    labelStyle: TextStyle(color: Colors.white),
+                    enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white)),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.black,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            TextField(
-              textAlign: TextAlign.center,
-              controller: _aboutController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                labelText: 'About Yourself (at least 200 words)',
-                labelStyle: TextStyle(color: Colors.white),
-                enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white)),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Colors.black,
+                TextField(
+                  textAlign: TextAlign.center,
+                  controller: _registrationNumberController,
+                  decoration: InputDecoration(
+                    labelText: 'Registration Number (NCRM No)',
+                    alignLabelWithHint: true,
+                    labelStyle: TextStyle(color: Colors.white),
+                    enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white)),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.black,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            TextField(
-              textAlign: TextAlign.center,
-              controller: _registrationNumberController,
-              decoration: InputDecoration(
-                labelText: 'Registration Number (NCRM No)',
-                alignLabelWithHint: true,
-                labelStyle: TextStyle(color: Colors.white),
-                enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white)),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Colors.black,
+                TextField(
+                  textAlign: TextAlign.center,
+                  controller: _passwordController,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    alignLabelWithHint: true,
+                    labelStyle: TextStyle(color: Colors.white),
+                    enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white)),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.black,
+                      ),
+                    ),
                   ),
+                  obscureText: true,
                 ),
-              ),
-            ),
-            TextField(
-              textAlign: TextAlign.center,
-              controller: _passwordController,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                alignLabelWithHint: true,
-                labelStyle: TextStyle(color: Colors.white),
-                enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white)),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-              obscureText: true,
-            ),
-            SizedBox(height: 16.0),
-            Container(
-              width: MediaQuery.of(context).size.width / 2,
-              child: ElevatedButton(
-                // onPressed: _signUp,
-                onPressed: () {
-                  print(dpUrl);
-                  _signUp();
-                },
+                SizedBox(height: 16.0),
+                loading
+                    ? const CircularProgressIndicator(
+                        color: Color.fromARGB(255, 6, 36, 8),
+                      )
+                    : Container(
+                        width: MediaQuery.of(context).size.width / 2,
+                        child: ElevatedButton(
+                          // onPressed: _signUp,
+                          onPressed: () {
+                            print(dpUrl);
+                            _signUp();
+                          },
 
-                child: Text(
-                  'Sign Up',
-                  style: GoogleFonts.poppins(color: Colors.black),
-                ),
-              ),
+                          child: Text(
+                            'Sign Up',
+                            style: GoogleFonts.poppins(color: Colors.black),
+                          ),
+                        ),
+                      ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

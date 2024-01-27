@@ -146,7 +146,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
                               ),
                               child: Text('Reset Password',
                                   style: GoogleFonts.poppins(
-                                      fontSize: 13,
+                                      fontSize: 12,
                                       letterSpacing: 1.5,
                                       color: Colors.black)),
                             ),
