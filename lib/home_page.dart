@@ -3,6 +3,20 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+
+import 'booked_doctor.dart';
+
+class UserAppointmentDetails {
+  final String documentId;
+  final String userId;
+  final String currentStatus;
+  final DateTime dateTime;
+  final UserDetails? userDetails;
+
+  UserAppointmentDetails(this.documentId, this.userId, this.currentStatus,
+      this.dateTime, this.userDetails);
+}
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -52,6 +66,32 @@ class _HomePageState extends State<HomePage> {
   }
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<UserDetails?> fetchUserDetails(String userId) async {
+    try {
+      CollectionReference usersCollection = _firestore.collection('users');
+
+      DocumentSnapshot userSnapshot = await usersCollection.doc(userId).get();
+
+      if (userSnapshot.exists) {
+        Map<String, dynamic>? data =
+            userSnapshot.data() as Map<String, dynamic>?;
+
+        if (data != null) {
+          String name = data['Name'] as String? ?? '';
+          String profilePicture = data['profilePicture'] as String? ?? '';
+
+          return UserDetails(name, profilePicture);
+        }
+      }
+
+      return null;
+    } catch (e) {
+      print('Error fetching User Details: $e');
+      return null;
+    }
+  }
+
   late String profilePictureUrl = '';
   late String displayName = '';
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -60,6 +100,21 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _fetchUserProfile();
+    _fetchAppointments(); // Add this line to fetch appointments
+  }
+
+  Future<void> _fetchAppointments() async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final appointments = await fetchDoctorAppointments(user.uid);
+        setState(() {
+          this.appointments = appointments;
+        });
+      }
+    } catch (e) {
+      print('Error fetching appointments: $e');
+    }
   }
 
   Future<void> _fetchUserProfile() async {
@@ -82,7 +137,46 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  List<UserAppointmentDetails> appointments = [];
+
   // Function to generate initials from the name
+  Future<List<UserAppointmentDetails>> fetchDoctorAppointments(
+      String doctorUid) async {
+    List<UserAppointmentDetails> appointments = [];
+
+    try {
+      CollectionReference doctorCollection = _firestore.collection('doctors');
+      CollectionReference appointmentCollection =
+          doctorCollection.doc(doctorUid).collection('BookedAppointment');
+
+      QuerySnapshot querySnapshot = await appointmentCollection.get();
+
+      for (QueryDocumentSnapshot<Object?> docSnapshot in querySnapshot.docs) {
+        if (docSnapshot.exists) {
+          String documentId = docSnapshot.id;
+          Map<String, dynamic>? data =
+              docSnapshot.data() as Map<String, dynamic>?;
+
+          if (data != null) {
+            String userId = data['PatientId'] as String? ?? '';
+            String currentStatus = data['CurrentStatus'] as String? ?? '';
+
+            UserDetails? userDetails = await fetchUserDetails(userId);
+
+            UserAppointmentDetails userAppointmentDetails =
+                UserAppointmentDetails(documentId, userId, currentStatus,
+                    DateTime.now(), userDetails);
+            appointments.add(userAppointmentDetails);
+          }
+        }
+      }
+
+      return appointments;
+    } catch (e) {
+      print('Error fetching Doctor Appointments: $e');
+      return [];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -225,16 +319,17 @@ class _HomePageState extends State<HomePage> {
                         height: MediaQuery.of(context).size.height * 0.5,
                         width: double.infinity,
                         decoration: BoxDecoration(
-                            color: Colors.cyan.shade100,
-                            borderRadius: BorderRadius.circular(10)),
+                          color: Colors.white, // Set background color to white
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         child: Column(
                           children: [
                             Padding(
                               padding: const EdgeInsets.symmetric(
-                                vertical: 15,
+                                vertical: 10,
                               ),
                               child: Text(
-                                'Your Appoinments',
+                                'Your Appointments',
                                 style: GoogleFonts.poppins(
                                   letterSpacing: 0.5,
                                   fontSize:
@@ -244,19 +339,81 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                             Expanded(
-                                child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
                                     color: Colors.cyan.shade200,
-                                    borderRadius: BorderRadius.circular(10)),
-                                    child: Center(child: Text('No appointments found'),),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: appointments.isEmpty
+                                      ? Center(
+                                          child: Text('No appointments found'),
+                                        )
+                                      : ListView.builder(
+                                          itemCount: appointments.length,
+                                          itemBuilder: (context, index) {
+                                            var appointment =
+                                                appointments[index];
+                                            var userName =
+                                                appointment.userDetails?.name ??
+                                                    '';
+                                            var dateTime = appointment.dateTime;
+
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          DoctorAppointments(),
+                                                    ),
+                                                  );
+                                                },
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              5)),
+                                                  alignment: Alignment.center,
+                                                  child: ListTile(
+                                                    title: Text(
+                                                      userName.toUpperCase(),
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                    ),
+                                                    subtitle: Text(
+                                                      '${DateFormat('dd MMM yyyy').format(dateTime)} at ${DateFormat('HH:mm').format(dateTime)}',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                ),
                               ),
-                            ))
+                            ),
                           ],
                         ),
-                      )
+                      ),
+                      Center(
+                        child: Text(
+                          "**For more information, tap the patient's name",
+                          style: GoogleFonts.poppins(
+                            color: Colors.red,
+                            letterSpacing: 1,
+                            fontSize: MediaQuery.of(context).size.width * 0.03,
+                            // fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

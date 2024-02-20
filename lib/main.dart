@@ -2,7 +2,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:live_care/Auth/main_page_auth.dart';
-import 'package:live_care/doctor_details._page.dart';
 import 'package:live_care/home_page.dart';
 import 'package:live_care/login_page.dart';
 import 'package:live_care/mainPage.dart';

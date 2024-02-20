@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:live_care/booked_doctor.dart';
 import 'package:live_care/middle_page.dart';
 
 import 'home_page.dart';
@@ -13,7 +14,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  List pages = [HomePage(), MiddlePage(), ProfilePage()];
+  List pages = [HomePage(), DoctorAppointments(), ProfilePage()];
   int currentIndex = 0;
 
   void onTap(int index) {

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:live_care/booked_doctor.dart';
 import 'package:live_care/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -162,11 +163,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   // );
                 }),
                 _buildOptionTile('Appoinments', Icons.tune, () {
-                  // Navigator.of(context).push(
-                  //   MaterialPageRoute(
-                  //     builder: (context) => MyListViewPage(),
-                  //   ),
-                  // );
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => DoctorAppointments(),
+                    ),
+                  );
                 }),
                 _buildOptionTile('Help & Support', Icons.phone, () {
                   // Navigator.of(context).push(
