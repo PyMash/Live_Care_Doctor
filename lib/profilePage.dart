@@ -1,11 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:live_care/aboutus_page.dart';
 import 'package:live_care/booked_doctor.dart';
+import 'package:live_care/edit_profile.dart';
 import 'package:live_care/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../home_page.dart';
+import 'help_page.dart';
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -121,7 +124,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 13),
                 Text(
-                  'Dr. '+Name,
+                  'Dr.'+Name,
                   style: const TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.w600,
@@ -156,11 +159,11 @@ class _ProfilePageState extends State<ProfilePage> {
               physics: const NeverScrollableScrollPhysics(),
               children: [
                 _buildOptionTile('Edit Profile', Icons.settings, () {
-                  // Navigator.of(context).push(
-                  //   MaterialPageRoute(
-                  //     builder: (context) => EditProfilePage(),
-                  //   ),
-                  // );
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => EditProfilePage(),
+                    ),
+                  );
                 }),
                 _buildOptionTile('Appoinments', Icons.tune, () {
                   Navigator.of(context).push(
@@ -170,18 +173,18 @@ class _ProfilePageState extends State<ProfilePage> {
                   );
                 }),
                 _buildOptionTile('Help & Support', Icons.phone, () {
-                  // Navigator.of(context).push(
-                  //   MaterialPageRoute(
-                  //     builder: (context) => const HelpPage(),
-                  //   ),
-                  // );
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const HelpPage(),
+                    ),
+                  );
                 }),
                 _buildOptionTile('About Us', Icons.help, () {
-                  // Navigator.of(context).push(
-                  //   MaterialPageRoute(
-                  //     builder: (context) => const AboutPage(),
-                  //   ),
-                  // );
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AboutPage(),
+                    ),
+                  );
                 }),
               ],
             ),
